@@ -26,7 +26,31 @@ func TestEU863Band(t *testing.T) {
 			})
 		})
 
-		Convey("Then GetDownlinkTXPower returns the expected value", func() {
+		Convey("Then GetDownlinkTXPower returns the expected value for 863.000000 MHz", func() {
+			So(band.GetDownlinkTXPower(863000000), ShouldEqual, 14)
+		})
+
+		Convey("Then GetDownlinkTXPower returns the expected value for 863.000001 MHz", func() {
+			So(band.GetDownlinkTXPower(863000001), ShouldEqual, 14)
+		})
+
+		Convey("Then GetDownlinkTXPower returns the expected value for 869.200000 MHz", func() {
+			So(band.GetDownlinkTXPower(869200000), ShouldEqual, 14)
+		})
+
+		Convey("Then GetDownlinkTXPower returns the expected value for 869.400000 MHz", func() {
+			So(band.GetDownlinkTXPower(869400000), ShouldEqual, 27)
+		})
+
+		Convey("Then GetDownlinkTXPower returns the expected value for 869.400001 MHz", func() {
+			So(band.GetDownlinkTXPower(869400001), ShouldEqual, 27)
+		})
+
+		Convey("Then GetDownlinkTXPower returns the expected value for 869.650000 MHz", func() {
+			So(band.GetDownlinkTXPower(869650000), ShouldEqual, 14)
+		})
+
+		Convey("Then GetDownlinkTXPower returns the expected value for any other value (0)", func() {
 			So(band.GetDownlinkTXPower(0), ShouldEqual, 14)
 		})
 
@@ -134,7 +158,7 @@ func TestEU863Band(t *testing.T) {
 
 			})
 
-			Convey("Then GetUplinkChannelFrequency takes the extra channels into consideration", func() {
+			Convey("Then GetUplinkChannelIndex takes the extra channels into consideration", func() {
 				tests := []int{
 					868100000,
 					868300000,
@@ -152,6 +176,25 @@ func TestEU863Band(t *testing.T) {
 						defaultChannel = true
 					}
 					channel, err := band.GetUplinkChannelIndex(expFreq, defaultChannel)
+					So(err, ShouldBeNil)
+					So(channel, ShouldEqual, expChannel)
+				}
+			})
+
+			Convey("Then GetUplinkChannelIndexForFrequencyDR takes the extra channels into consideration", func() {
+				tests := []int{
+					868100000,
+					868300000,
+					868500000,
+					867100000,
+					867300000,
+					867500000,
+					867700000,
+					867900000,
+				}
+
+				for expChannel, freq := range tests {
+					channel, err := band.GetUplinkChannelIndexForFrequencyDR(freq, 3)
 					So(err, ShouldBeNil)
 					So(channel, ShouldEqual, expChannel)
 				}

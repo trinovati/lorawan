@@ -1,4 +1,4 @@
-(Go)
+# LoRaWAN (Go)
 
 [![CircleCI](https://circleci.com/gh/brocaar/lorawan.svg?style=svg)](https://circleci.com/gh/brocaar/lorawan)
 [![GoDoc](https://godoc.org/github.com/brocaar/lorawan?status.svg)](https://godoc.org/github.com/brocaar/lorawan)
@@ -86,11 +86,10 @@ You can download the LoRaWAN specification here: https://lora-alliance.org/loraw
 
 ## Support
 
-For questions, feedback or support, please refer to the LoRa Server project
-forum: [https://forum.loraserver.io](https://forum.loraserver.io/).
+For questions, feedback or support, please refer to the ChirpStack Community Forum:
+[https://forum.chirpstack.io](https://forum.chirpstack.io/).
 
 ## License
 
 This package is distributed under the MIT license which can be found in ``LICENSE``.
 LoRaWAN is a trademark of the LoRa Alliance Inc. (https://www.lora-alliance.org/).
-# lorawan

@@ -257,12 +257,16 @@ type ChMask [16]bool
 
 // MarshalBinary marshals the object in binary form.
 func (m ChMask) MarshalBinary() ([]byte, error) {
-	b := make([]byte, 2)
-	for i := uint8(0); i < 16; i++ {
+	var n uint16
+	for i := uint(0); i < 16; i++ {
 		if m[i] {
-			b[i/8] = b[i/8] ^ 1<<(i%8)
+			n |= 1 << i
 		}
 	}
+
+	b := make([]byte, 2)
+	binary.LittleEndian.PutUint16(b, n)
+
 	return b, nil
 }
 
@@ -271,13 +275,14 @@ func (m *ChMask) UnmarshalBinary(data []byte) error {
 	if len(data) != 2 {
 		return errors.New("lorawan: 2 bytes of data are expected")
 	}
-	for i, b := range data {
-		for j := uint8(0); j < 8; j++ {
-			if b&(1<<j) > 0 {
-				m[uint8(i)*8+j] = true
-			}
+
+	n := binary.LittleEndian.Uint16(data)
+	for i := uint(0); i < 16; i++ {
+		if n&(1<<i) != 0 {
+			m[i] = true
 		}
 	}
+
 	return nil
 }
 
@@ -972,11 +977,11 @@ func (p *PingSlotChannelAnsPayload) UnmarshalBinary(data []byte) error {
 // DeviceTimeAnsPayload represents the DeviceTimeAns payload.
 type DeviceTimeAnsPayload struct {
 	TimeSinceGPSEpoch time.Duration `json:"timeSinceGPSEpoch"`
-	BatchNumber string `json:"batch_number"`
-    OpeningDate  time.Duration `json:"opening_date"`
-    ClosingDate  time.Duration `json:"closing_date"`
-    StatusProduction string `json:"status_production"`
-    PropertyEnvironmentID string `json:"property_environment_id"`
+	BatchNumber string `json:"batch_number"`	
+    OpeningDate  time.Duration `json:"opening_date"`	
+    ClosingDate  time.Duration `json:"closing_date"`	
+    StatusProduction string `json:"status_production"`	
+    PropertyEnvironmentID string `json:"property_environment_id"`	
 
 }
 
@@ -988,20 +993,18 @@ func (p DeviceTimeAnsPayload) MarshalBinary() ([]byte, error) {
 	binary.LittleEndian.PutUint32(b1, seconds)
 
 	// time.Second / 256 = 3906250ns
-	b1[4] = uint8((p.TimeSinceGPSEpoch - (time.Duration(seconds) * time.Second)) / 3906250)
+	b[4] = uint8((p.TimeSinceGPSEpoch - (time.Duration(seconds) * time.Second)) / 3906250)
 
-	b2 := make([]byte, 5)
-	seconds = uint32(p.OpeningDate / time.Second)
-	binary.LittleEndian.PutUint32(b2, seconds)
-	b2[4] = uint8((p.OpeningDate - (time.Duration(seconds) * time.Second)) / 3906250)
-
-	b3 := make([]byte, 5)
-	seconds = uint32(p.ClosingDate / time.Second)
-	binary.LittleEndian.PutUint32(b3, seconds)
-	b3[4] = uint8((p.ClosingDate - (time.Duration(seconds) * time.Second)) / 3906250)
-
+	b2 := make([]byte, 5)	
+	seconds = uint32(p.OpeningDate / time.Second)	
+	binary.LittleEndian.PutUint32(b2, seconds)	
+	b2[4] = uint8((p.OpeningDate - (time.Duration(seconds) * time.Second)) / 3906250)	
+	b3 := make([]byte, 5)	
+	seconds = uint32(p.ClosingDate / time.Second)	
+	binary.LittleEndian.PutUint32(b3, seconds)	
+	b3[4] = uint8((p.ClosingDate - (time.Duration(seconds) * time.Second)) / 3906250)	
 	deviceTime := append(b1[:], append(b2[:], b3[:]...)...)
-	
+
 	return deviceTime, nil
 }
 
@@ -1132,7 +1135,7 @@ func (p *ADRParam) UnmarshalBinary(data []byte) error {
 
 // ADRParamSetupReqPayload represents the ADRParamReq payload.
 type ADRParamSetupReqPayload struct {
-	ADRParam ADRParam `josn:"adrParam"`
+	ADRParam ADRParam `json:"adrParam"`
 }
 
 // MarshalBinary encodes the object into bytes.
