@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/lorawan"
-	"github.com/brocaar/lorawan/band"
+	"github.com/trinovati/lorawan"
+	"github.com/trinovati/lorawan/band"
 	"github.com/go-redis/redis/v7"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"

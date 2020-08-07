@@ -3,10 +3,10 @@ package joinserver
 import (
 	"fmt"
 
-	"github.com/brocaar/lorawan"
+	"github.com/trinovati/lorawan"
 	"github.com/pkg/errors"
 
-	"github.com/brocaar/lorawan/backend"
+	"github.com/trinovati/lorawan/backend"
 )
 
 var joinTasks = []func(*context) error{

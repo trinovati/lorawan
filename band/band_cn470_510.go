@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/brocaar/lorawan"
+	"github.com/trinovati/lorawan"
 )
 
 type cn470Band struct {
