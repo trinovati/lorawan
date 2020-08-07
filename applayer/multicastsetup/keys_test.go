@@ -3,7 +3,7 @@ package multicastsetup
 import (
 	"testing"
 
-	"github.com/trinovati/lorawan"
+	"github.com/brocaar/lorawan"
 	"github.com/stretchr/testify/require"
 )
 

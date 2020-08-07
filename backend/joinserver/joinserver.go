@@ -11,8 +11,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/trinovati/lorawan"
-	"github.com/trinovati/lorawan/backend"
+	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/backend"
 )
 
 // DeviceKeys holds the device (root) keys and the join-nonce to be used
@@ -28,10 +28,9 @@ type DeviceKeys struct {
 // HandlerConfig holds the join-server handler configuration.
 type HandlerConfig struct {
 	Logger                    *log.Logger
-	GetDeviceKeysByDevEUIFunc func(devEUI lorawan.EUI64) (DeviceKeys, error)    // ErrDevEUINotFound must be returned when the device does not exist
-	GetKEKByLabelFunc         func(label string) ([]byte, error)                // must return an empty slice when no KEK exists for the given label
-	GetASKEKLabelByDevEUIFunc func(devEUI lorawan.EUI64) (string, error)        // must return an empty string when no label exists
-	GetHomeNetIDByDevEUIFunc  func(devEUI lorawan.EUI64) (lorawan.NetID, error) // ErrDevEUINotFound must be returned when the device does not exist
+	GetDeviceKeysByDevEUIFunc func(devEUI lorawan.EUI64) (DeviceKeys, error) // ErrDevEUINotFound must be returned when the device does not exist
+	GetKEKByLabelFunc         func(label string) ([]byte, error)             // must return an empty slice when no KEK exists for the given label
+	GetASKEKLabelByDevEUIFunc func(devEUI lorawan.EUI64) (string, error)     // must return an empty string when no label exists
 }
 
 type handler struct {
@@ -72,14 +71,6 @@ func NewHandler(config HandlerConfig) (http.Handler, error) {
 		}
 	}
 
-	if h.config.GetHomeNetIDByDevEUIFunc == nil {
-		h.log.Warning("backend/joinserver: get home netid by deveui function is not set")
-
-		h.config.GetHomeNetIDByDevEUIFunc = func(devEUI lorawan.EUI64) (lorawan.NetID, error) {
-			return lorawan.NetID{}, ErrDevEUINotFound
-		}
-	}
-
 	return &h, nil
 }
 
@@ -110,8 +101,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.handleJoinReq(w, b)
 	case backend.RejoinReq:
 		h.handleRejoinReq(w, b)
-	case backend.HomeNSReq:
-		h.handleHomeNSReq(w, b)
 	default:
 		h.returnError(w, http.StatusBadRequest, backend.Other, fmt.Sprintf("invalid MessageType: %s", basePL.MessageType))
 	}
@@ -139,18 +128,16 @@ func (h *handler) returnError(w http.ResponseWriter, code int, resultCode backen
 
 func (h *handler) returnJoinReqError(w http.ResponseWriter, basePL backend.BasePayload, code int, resultCode backend.ResultCode, msg string) {
 	jaPL := backend.JoinAnsPayload{
-		BasePayloadResult: backend.BasePayloadResult{
-			BasePayload: backend.BasePayload{
-				ProtocolVersion: backend.ProtocolVersion1_0,
-				SenderID:        basePL.ReceiverID,
-				ReceiverID:      basePL.SenderID,
-				TransactionID:   basePL.TransactionID,
-				MessageType:     backend.JoinAns,
-			},
-			Result: backend.Result{
-				ResultCode:  resultCode,
-				Description: msg,
-			},
+		BasePayload: backend.BasePayload{
+			ProtocolVersion: backend.ProtocolVersion1_0,
+			SenderID:        basePL.ReceiverID,
+			ReceiverID:      basePL.SenderID,
+			TransactionID:   basePL.TransactionID,
+			MessageType:     backend.JoinAns,
+		},
+		Result: backend.Result{
+			ResultCode:  resultCode,
+			Description: msg,
 		},
 	}
 
@@ -159,38 +146,16 @@ func (h *handler) returnJoinReqError(w http.ResponseWriter, basePL backend.BaseP
 
 func (h *handler) returnRejoinReqError(w http.ResponseWriter, basePL backend.BasePayload, code int, resultCode backend.ResultCode, msg string) {
 	jaPL := backend.RejoinAnsPayload{
-		BasePayloadResult: backend.BasePayloadResult{
-			BasePayload: backend.BasePayload{
-				ProtocolVersion: backend.ProtocolVersion1_0,
-				SenderID:        basePL.ReceiverID,
-				ReceiverID:      basePL.SenderID,
-				TransactionID:   basePL.TransactionID,
-				MessageType:     backend.RejoinAns,
-			},
-			Result: backend.Result{
-				ResultCode:  resultCode,
-				Description: msg,
-			},
+		BasePayload: backend.BasePayload{
+			ProtocolVersion: backend.ProtocolVersion1_0,
+			SenderID:        basePL.ReceiverID,
+			ReceiverID:      basePL.SenderID,
+			TransactionID:   basePL.TransactionID,
+			MessageType:     backend.RejoinAns,
 		},
-	}
-
-	h.returnPayload(w, code, jaPL)
-}
-
-func (h *handler) returnHomeNSReqError(w http.ResponseWriter, basePL backend.BasePayload, code int, resultCode backend.ResultCode, msg string) {
-	jaPL := backend.HomeNSAnsPayload{
-		BasePayloadResult: backend.BasePayloadResult{
-			BasePayload: backend.BasePayload{
-				ProtocolVersion: backend.ProtocolVersion1_0,
-				SenderID:        basePL.ReceiverID,
-				ReceiverID:      basePL.SenderID,
-				TransactionID:   basePL.TransactionID,
-				MessageType:     backend.HomeNSAns,
-			},
-			Result: backend.Result{
-				ResultCode:  resultCode,
-				Description: msg,
-			},
+		Result: backend.Result{
+			ResultCode:  resultCode,
+			Description: msg,
 		},
 	}
 
@@ -254,7 +219,6 @@ func (h *handler) handleJoinReq(w http.ResponseWriter, b []byte) {
 		"receiver_id":    ans.BasePayload.ReceiverID,
 		"transaction_id": ans.BasePayload.TransactionID,
 		"result_code":    ans.Result.ResultCode,
-		"dev_eui":        joinReqPL.DevEUI,
 	}).Info("backend/joinserver: sending response")
 
 	h.returnPayload(w, http.StatusOK, ans)
@@ -305,54 +269,6 @@ func (h *handler) handleRejoinReq(w http.ResponseWriter, b []byte) {
 		"receiver_id":    ans.BasePayload.ReceiverID,
 		"transaction_id": ans.BasePayload.TransactionID,
 		"result_code":    ans.Result.ResultCode,
-		"dev_eui":        rejoinReqPL.DevEUI,
-	}).Info("backend/joinserver: sending response")
-
-	h.returnPayload(w, http.StatusOK, ans)
-}
-
-func (h *handler) handleHomeNSReq(w http.ResponseWriter, b []byte) {
-	var homeNSReq backend.HomeNSReqPayload
-	err := json.Unmarshal(b, &homeNSReq)
-	if err != nil {
-		h.returnError(w, http.StatusBadRequest, backend.Other, err.Error())
-		return
-	}
-
-	netID, err := h.config.GetHomeNetIDByDevEUIFunc(homeNSReq.DevEUI)
-	if err != nil {
-		switch err {
-		case ErrDevEUINotFound:
-			h.returnHomeNSReqError(w, homeNSReq.BasePayload, http.StatusBadRequest, backend.UnknownDevEUI, err.Error())
-		default:
-			h.returnHomeNSReqError(w, homeNSReq.BasePayload, http.StatusInternalServerError, backend.Other, err.Error())
-		}
-		return
-	}
-
-	ans := backend.HomeNSAnsPayload{
-		BasePayloadResult: backend.BasePayloadResult{
-			BasePayload: backend.BasePayload{
-				ProtocolVersion: backend.ProtocolVersion1_0,
-				SenderID:        homeNSReq.ReceiverID,
-				ReceiverID:      homeNSReq.SenderID,
-				TransactionID:   homeNSReq.TransactionID,
-				MessageType:     backend.HomeNSAns,
-			},
-			Result: backend.Result{
-				ResultCode: backend.Success,
-			},
-		},
-		HNetID: netID,
-	}
-
-	h.log.WithFields(log.Fields{
-		"message_type":   ans.BasePayload.MessageType,
-		"sender_id":      ans.BasePayload.SenderID,
-		"receiver_id":    ans.BasePayload.ReceiverID,
-		"transaction_id": ans.BasePayload.TransactionID,
-		"result_code":    ans.Result.ResultCode,
-		"dev_eui":        homeNSReq.DevEUI,
 	}).Info("backend/joinserver: sending response")
 
 	h.returnPayload(w, http.StatusOK, ans)

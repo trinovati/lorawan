@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/trinovati/lorawan"
+	"github.com/brocaar/lorawan"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

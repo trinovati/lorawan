@@ -3,7 +3,7 @@ package band
 import (
 	"time"
 
-	"github.com/trinovati/lorawan"
+	"github.com/brocaar/lorawan"
 )
 
 type eu863Band struct {

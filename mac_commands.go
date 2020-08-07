@@ -976,13 +976,12 @@ func (p *PingSlotChannelAnsPayload) UnmarshalBinary(data []byte) error {
 
 // DeviceTimeAnsPayload represents the DeviceTimeAns payload.
 type DeviceTimeAnsPayload struct {
-	TimeSinceGPSEpoch time.Duration `json:"timeSinceGPSEpoch"`
-	BatchNumber string `json:"batch_number"`	
-    OpeningDate  time.Duration `json:"opening_date"`	
-    ClosingDate  time.Duration `json:"closing_date"`	
-    StatusProduction string `json:"status_production"`	
-    PropertyEnvironmentID string `json:"property_environment_id"`	
-
+	TimeSinceGPSEpoch     time.Duration `json:"timeSinceGPSEpoch"`
+	BatchNumber           string        `json:"batch_number"`
+	OpeningDate           time.Duration `json:"opening_date"`
+	ClosingDate           time.Duration `json:"closing_date"`
+	StatusProduction      string        `json:"status_production"`
+	PropertyEnvironmentID string        `json:"property_environment_id"`
 }
 
 // MarshalBinary encodes the object into bytes.
@@ -993,16 +992,16 @@ func (p DeviceTimeAnsPayload) MarshalBinary() ([]byte, error) {
 	binary.LittleEndian.PutUint32(b1, seconds)
 
 	// time.Second / 256 = 3906250ns
-	b[4] = uint8((p.TimeSinceGPSEpoch - (time.Duration(seconds) * time.Second)) / 3906250)
+	b1[4] = uint8((p.TimeSinceGPSEpoch - (time.Duration(seconds) * time.Second)) / 3906250)
+	b2 := make([]byte, 5)
+	seconds = uint32(p.OpeningDate / time.Second)
+	binary.LittleEndian.PutUint32(b2, seconds)
+	b2[4] = uint8((p.OpeningDate - (time.Duration(seconds) * time.Second)) / 3906250)
+	b3 := make([]byte, 5)
+	seconds = uint32(p.ClosingDate / time.Second)
+	binary.LittleEndian.PutUint32(b3, seconds)
+	b3[4] = uint8((p.ClosingDate - (time.Duration(seconds) * time.Second)) / 3906250)
 
-	b2 := make([]byte, 5)	
-	seconds = uint32(p.OpeningDate / time.Second)	
-	binary.LittleEndian.PutUint32(b2, seconds)	
-	b2[4] = uint8((p.OpeningDate - (time.Duration(seconds) * time.Second)) / 3906250)	
-	b3 := make([]byte, 5)	
-	seconds = uint32(p.ClosingDate / time.Second)	
-	binary.LittleEndian.PutUint32(b3, seconds)	
-	b3[4] = uint8((p.ClosingDate - (time.Duration(seconds) * time.Second)) / 3906250)	
 	deviceTime := append(b1[:], append(b2[:], b3[:]...)...)
 
 	return deviceTime, nil

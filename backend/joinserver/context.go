@@ -1,8 +1,8 @@
 package joinserver
 
 import (
-	"github.com/trinovati/lorawan"
-	"github.com/trinovati/lorawan/backend"
+	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/backend"
 )
 
 type context struct {

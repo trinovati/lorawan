@@ -6,7 +6,4 @@ services:
       dockerfile: Dockerfile-devel
     volumes:
       - ./:/lorawan
-    links:
-      - redis
-  redis:
-    image: redis:6-alpine
+
